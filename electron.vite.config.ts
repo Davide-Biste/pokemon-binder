@@ -1,16 +1,15 @@
-import { resolve } from 'path'
 import { defineConfig } from 'electron-vite'
+import { resolve } from 'node:path'
 import vue from '@vitejs/plugin-vue'
+import tailwindcss from '@tailwindcss/vite'
 
 export default defineConfig({
-  main: {},
-  preload: {},
   renderer: {
+    plugins: [vue(), tailwindcss()],
     resolve: {
       alias: {
-        '@renderer': resolve('src/renderer/src')
+        '@': resolve(__dirname, './src/renderer/src')
       }
-    },
-    plugins: [vue()]
+    }
   }
 })
