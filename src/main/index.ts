@@ -2,6 +2,11 @@ import { app, shell, BrowserWindow, ipcMain } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
+import { registerBinderIpc } from './ipc/binders'
+import { registerWishlistIpc } from './ipc/wishlist'
+import { registerFriendsIpc } from './ipc/friends'
+import { registerProfileIpc } from './ipc/profile'
+import { closeDb } from './db'
 
 function createWindow(): void {
   // Create the browser window.
@@ -52,6 +57,12 @@ app.whenReady().then(() => {
   // IPC test
   ipcMain.on('ping', () => console.log('pong'))
 
+  // Register IPC bridges (DB / file I/O ↔ renderer).
+  registerBinderIpc()
+  registerWishlistIpc()
+  registerFriendsIpc()
+  registerProfileIpc()
+
   createWindow()
 
   app.on('activate', function () {
@@ -68,6 +79,10 @@ app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
     app.quit()
   }
+})
+
+app.on('before-quit', () => {
+  closeDb()
 })
 
 // In this file you can include the rest of your app's specific main process
