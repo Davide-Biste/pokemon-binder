@@ -9,7 +9,7 @@ let db: Database.Database | null = null
 export function getDb(): Database.Database {
   if (db) return db
 
-  const dbPath = join(app.getPath('userData'), 'pokemon-binder.db')
+  const dbPath = join(app.getPath('userData'), 'pokemon-holo-binder.db')
   db = new Database(dbPath)
   db.pragma('foreign_keys = ON')
   db.exec(SCHEMA)

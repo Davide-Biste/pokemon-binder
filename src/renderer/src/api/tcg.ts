@@ -127,3 +127,77 @@ export function getSetName(card: TcgCard, preferredLang = 8): string | null {
   }
   return card.set_code
 }
+
+/**
+ * Mapping numero-lingua → codice ISO breve + bandiera emoji, ordinato come
+ * lo presentiamo in UI. I numeri vengono dall'API pokeos (vedi `LANG_CODES`).
+ * Tengo `en` per primo (è la lingua "universale" del TCG) poi `it` come
+ * default dell'app, le altre a seguire.
+ *
+ * Note sulle bandiere:
+ *  - EN → 🇬🇧 (UK) anziché US: il TCG inglese europeo è la stampa più diffusa.
+ *  - LATAM → 🌎 (regionale, non c'è una bandiera nazionale).
+ *  - ZH → 🇨🇳 (Cinese Semplificato; il backend non distingue Traditional).
+ */
+const LANG_DISPLAY: ReadonlyArray<{ id: number; code: string; flag: string }> = [
+  { id: 9, code: 'EN', flag: '🇬🇧' },
+  { id: 8, code: 'IT', flag: '🇮🇹' },
+  { id: 7, code: 'ES', flag: '🇪🇸' },
+  { id: 5, code: 'FR', flag: '🇫🇷' },
+  { id: 6, code: 'DE', flag: '🇩🇪' },
+  { id: 10, code: 'PT-BR', flag: '🇧🇷' },
+  { id: 11, code: 'LATAM', flag: '🌎' },
+  { id: 1, code: 'JA', flag: '🇯🇵' },
+  { id: 3, code: 'KO', flag: '🇰🇷' },
+  { id: 4, code: 'ZH', flag: '🇨🇳' }
+]
+
+export interface LanguageBadge {
+  /** Codice breve mostrato in UI (`EN`, `IT`, `PT-BR`, …). */
+  code: string
+  /** Bandiera emoji corrispondente (`🇬🇧`, `🇮🇹`, …). */
+  flag: string
+}
+
+/**
+ * Returns all language badges (codice + bandiera) in which the card has been
+ * printed. We infer "printed in language N" from the presence of
+ * `set_name_lang_N`: pokeos populates that field only when the set has an
+ * official release in that language.
+ *
+ * Fallback: se nessuno dei `set_name_lang_*` è valorizzato (set sconosciuto
+ * o record corrotto), ritorniamo almeno la lingua sorgente della carta
+ * (`card.lang`, normalizzato) — meglio mostrare qualcosa che vuoto.
+ */
+export function getAvailableLanguages(card: TcgCard): LanguageBadge[] {
+  const out: LanguageBadge[] = []
+  for (const { id, code, flag } of LANG_DISPLAY) {
+    const v = card[`set_name_lang_${id}` as keyof TcgCard] as string | null | undefined
+    if (v) out.push({ code, flag })
+  }
+  if (out.length > 0) return out
+
+  // Niente set_name_* valorizzato → fallback sul `lang` del record.
+  // Mappo le sigle 3-char pokeos al `LANG_DISPLAY` per recuperare la bandiera.
+  const fallback = (card.lang ?? '').toLowerCase()
+  const fallbackToCode: Record<string, string> = {
+    eng: 'EN',
+    ita: 'IT',
+    spa: 'ES',
+    fre: 'FR',
+    fra: 'FR',
+    ger: 'DE',
+    deu: 'DE',
+    ptbr: 'PT-BR',
+    jpn: 'JA',
+    jap: 'JA',
+    kor: 'KO',
+    chn: 'ZH'
+  }
+  const guessed = fallbackToCode[fallback] ?? fallback.toUpperCase()
+  if (!guessed) return []
+  const match = LANG_DISPLAY.find((l) => l.code === guessed)
+  return match
+    ? [{ code: match.code, flag: match.flag }]
+    : [{ code: guessed, flag: '🏳️' }]
+}

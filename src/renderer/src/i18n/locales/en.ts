@@ -264,6 +264,7 @@ export default {
     typeAtLeast: 'Type at least 2 characters to search cards.',
     searching: 'Searching…',
     noCardsFor: 'No cards found for "{query}".',
+    noCardsEmpty: 'No cards to show.',
     loadingMore: 'Loading more…'
   },
 

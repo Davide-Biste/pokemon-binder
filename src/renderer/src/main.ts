@@ -4,14 +4,16 @@ import router from './router'
 
 import './assets/main.css'
 import './assets/pokebinder.css'
+// Holographic card effects (simeydotme/pokemon-cards-css, namespaced as `.holo-card`).
+import './assets/pokemon-holo/index.css'
 import { QueryClient, VueQueryPlugin } from '@tanstack/vue-query'
 import { i18n, hydrateLocaleFromSettings } from './i18n'
 
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 1000 * 60, // 1 minuto: dati considerati "fresh"
-      gcTime: 1000 * 60 * 10, // 10 minuti: tempo in cache se non usati
+      staleTime: 1000 * 60,
+      gcTime: 1000 * 60 * 10,
       refetchOnWindowFocus: false,
       refetchOnReconnect: true,
       refetchOnMount: false,

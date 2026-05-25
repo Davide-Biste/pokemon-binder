@@ -145,6 +145,7 @@ import { useBinders } from '@/composables/useBinders'
 import { findFirstEmptySlot } from '@/lib/binder-helpers'
 import { getCardImageUrl, type TcgCard } from '@/api/tcg'
 import { snapshotToTcgCard, toBinderSnapshot } from '@/lib/binder-card'
+import { usePreferredLang } from '@/i18n'
 import type { BinderCardSnapshot, BinderSummary } from '@shared/binders'
 
 const { t } = useI18n()
@@ -167,8 +168,9 @@ function totalSlots(b: BinderSummary): number {
 function isFull(b: BinderSummary): boolean {
   return b.cardCount >= totalSlots(b)
 }
+const preferredLang = usePreferredLang()
 function coverUrl(snap: BinderCardSnapshot): string {
-  return getCardImageUrl(snapshotToTcgCard(snap), { preferredLang: 8 })
+  return getCardImageUrl(snapshotToTcgCard(snap), { preferredLang: preferredLang.value })
 }
 
 async function onPick(b: BinderSummary) {

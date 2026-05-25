@@ -1,0 +1,42 @@
+/*
+ * Pokemon holographic effects — adapted from simeydotme/pokemon-cards-css
+ * (Copyright (C) 2022 Simon Goellner, GPL-3.0). All selectors are
+ * namespaced under `.holo-card` to avoid collisions with Tailwind/shadcn
+ * classes. CSS variables on `:root` are global by design (they only take
+ * effect inside `.holo-card` because the rules that read them are scoped
+ * there).
+ *
+ * Because the upstream CSS is GPL-3.0, this project as a whole is licensed
+ * under GPL-3.0-or-later. See ../../../LICENSE.
+ */
+
+/* Structural base + root variables (must come first — declares custom props). */
+@import "./cards/base.css";
+
+/* Shared "card" variables (grain, glitter, clip masks, colors). */
+@import "./cards.css";
+
+/* Per-rarity effect layers. Order doesn't matter much — each scopes via
+   `[data-rarity="..."]` — but keeping them alphabetical for findability. */
+@import "./cards/amazing-rare.css";
+@import "./cards/basic.css";
+@import "./cards/cosmos-holo.css";
+@import "./cards/radiant-holo.css";
+@import "./cards/rainbow-alt.css";
+@import "./cards/rainbow-holo.css";
+@import "./cards/regular-holo.css";
+@import "./cards/reverse-holo.css";
+@import "./cards/secret-rare.css";
+@import "./cards/shiny-rare.css";
+@import "./cards/shiny-v.css";
+@import "./cards/shiny-vmax.css";
+@import "./cards/swsh-pikachu.css";
+@import "./cards/trainer-full-art.css";
+@import "./cards/trainer-gallery-holo.css";
+@import "./cards/trainer-gallery-secret-rare.css";
+@import "./cards/trainer-gallery-v-max.css";
+@import "./cards/trainer-gallery-v-regular.css";
+@import "./cards/v-full-art.css";
+@import "./cards/v-max.css";
+@import "./cards/v-regular.css";
+@import "./cards/v-star.css";

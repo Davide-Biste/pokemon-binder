@@ -260,6 +260,7 @@ const it: MessageSchema = {
     typeAtLeast: 'Scrivi almeno 2 caratteri per cercare le carte.',
     searching: 'Ricerca…',
     noCardsFor: 'Nessuna carta trovata per "{query}".',
+    noCardsEmpty: 'Nessuna carta da mostrare.',
     loadingMore: 'Carico altri…'
   },
 

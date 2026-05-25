@@ -3,7 +3,7 @@ import { getPokemonData } from '@/api/pokemon'
 
 export function usePokemonData() {
   return useQuery({
-    queryKey: ['pokemon-data'],
+    queryKey: ['pokemon-holo-data'],
     queryFn: getPokemonData
   })
 }

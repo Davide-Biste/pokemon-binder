@@ -129,10 +129,7 @@
 
       <!-- TCG CARDS TAB -->
       <section v-else>
-        <div v-if="!canSearchCards" class="py-20 text-center text-sm text-white/40">
-          {{ t('pokedex.typeAtLeast') }}
-        </div>
-        <div v-else-if="tcgLoading" class="py-20 text-center text-sm text-white/40">
+        <div v-if="tcgLoading" class="py-20 text-center text-sm text-white/40">
           {{ t('pokedex.searching') }}
         </div>
         <div
@@ -148,7 +145,14 @@
           />
         </div>
         <div v-else class="py-20 text-center text-sm text-white/40">
-          {{ t('pokedex.noCardsFor', { query: debouncedSearch }) }}
+          <!-- Stato "vuoto": cambia messaggio se siamo sulla landing senza
+               filtri (potrebbe essere il backend che non risponde) vs su una
+               ricerca con zero match. -->
+          {{
+            debouncedSearch
+              ? t('pokedex.noCardsFor', { query: debouncedSearch })
+              : t('pokedex.noCardsEmpty')
+          }}
         </div>
       </section>
     </div>
@@ -266,21 +270,35 @@ const filteredPokemon = computed(() => {
   })
 })
 
+// 30 iniziali, poi +30 ogni volta che la sentinel arriva in viewport.
 const { visibleItems, sentinel, hasMore } = useInfiniteScroll(filteredPokemon, {
-  pageSize: 60,
-  increment: 60
+  pageSize: 30,
+  increment: 30
 })
+// `sentinel` viene usato dal template via `ref="sentinel"` ma vue-tsc non
+// rileva l'uso template per le ref restituite da un composable destrutturato
+// → `void` per zittire noUnusedLocals senza spegnerlo globalmente.
+void sentinel
 
 // --- TCG cards tab ----------------------------------------------------------
 
-const canSearchCards = computed(
-  () => tab.value === 'cards' && debouncedSearch.value.length >= 2
-)
+/**
+ * Limite risultati per la query TCG:
+ *  - 30 quando l'utente è "fermo" (default landing, nessuna ricerca esplicita)
+ *  - 120 quando ha digitato qualcosa di sensato — ha senso vederne di più
+ *    quando filtra per nome.
+ */
+const tcgLimit = computed(() => (debouncedSearch.value.length >= 2 ? 120 : 30))
 
 const { data: tcgCards, isLoading: tcgLoading } = useQuery({
-  queryKey: ['pokedex-tcg-search', debouncedSearch],
-  queryFn: () => searchTcgCards({ search: debouncedSearch.value, limit: 120 }),
-  enabled: canSearchCards,
+  // `tab.value` nella key fa sì che switchando tab la query si rilanci pulita.
+  queryKey: ['pokedex-tcg-search', debouncedSearch, tcgLimit, tab],
+  queryFn: () =>
+    searchTcgCards({ search: debouncedSearch.value, limit: tcgLimit.value }),
+  // Esegui sempre quando siamo sul tab cards — anche con search vuoto:
+  // l'utente entra nel tab e vede subito le prime 30 carte senza dover
+  // digitare nulla.
+  enabled: computed(() => tab.value === 'cards'),
   staleTime: 1000 * 60 * 5
 })
 

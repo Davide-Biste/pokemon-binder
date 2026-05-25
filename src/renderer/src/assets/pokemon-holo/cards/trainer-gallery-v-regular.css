@@ -1,0 +1,34 @@
+/*
+
+  TRAINER GALLERY (V)
+	some styles inherited from v-full-art.css
+
+*/
+
+
+
+
+/*
+
+  SHINE LAYERS
+
+*/
+
+
+
+
+
+
+
+/*
+
+  GLARE LAYERS
+
+*/    
+
+
+.holo-card[data-rarity="rare holo v"][data-trainer-gallery="true"] .holo-card__glare {
+
+  opacity: calc(var(--card-opacity)*.4);
+
+}

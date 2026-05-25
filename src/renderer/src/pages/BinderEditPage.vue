@@ -188,6 +188,7 @@ import {
 } from '@/composables/useBinders'
 import { snapshotToTcgCard, toBinderSnapshot } from '@/lib/binder-card'
 import { getCardImageUrl, type TcgCard } from '@/api/tcg'
+import { usePreferredLang } from '@/i18n'
 import type { BinderCardSnapshot, TradeStatus } from '@shared/binders'
 
 const { t } = useI18n()
@@ -338,7 +339,8 @@ function onClearCover() {
   coverOpen.value = false
 }
 
+const preferredLang = usePreferredLang()
 function coverUrl(snap: BinderCardSnapshot): string {
-  return getCardImageUrl(snapshotToTcgCard(snap), { preferredLang: 8 })
+  return getCardImageUrl(snapshotToTcgCard(snap), { preferredLang: preferredLang.value })
 }
 </script>

@@ -32,3 +32,21 @@ $ npm run build:mac
 # For Linux
 $ npm run build:linux
 ```
+
+## License
+
+Copyright © 2026 Davide Mazzeo.
+
+This project is licensed under the **GNU General Public License v3.0 or later**
+(GPL-3.0-or-later). See the [LICENSE](./LICENSE) file for the full text.
+
+### Third-party attributions
+
+- **Holographic card effects** — adapted from
+  [simeydotme/pokemon-cards-css](https://github.com/simeydotme/pokemon-cards-css)
+  by Simon Goellner, licensed under GPL-3.0. The CSS in
+  [`src/renderer/src/assets/pokemon-holo/`](src/renderer/src/assets/pokemon-holo)
+  and its referenced image assets are derivative works of that project.
+  Because that code is GPL, the whole of this project is distributed under
+  GPL-3.0-or-later.
+

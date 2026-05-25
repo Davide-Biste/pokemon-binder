@@ -63,7 +63,7 @@
                   @click="$emit('pick', card)"
                 >
                   <img
-                    :src="getCardImageUrl(card, { preferredLang: 8 })"
+                    :src="getCardImageUrl(card, { preferredLang: preferredLang })"
                     :alt="card.card_name"
                     loading="lazy"
                     class="absolute inset-0 h-full w-full object-cover"
@@ -92,10 +92,15 @@ import { useI18n } from 'vue-i18n'
 import { useQuery } from '@tanstack/vue-query'
 import { Input } from '@/components/ui/input'
 import { getCardImageUrl, searchTcgCards, type TcgCard } from '@/api/tcg'
+import { usePreferredLang } from '@/i18n'
 
 const { t } = useI18n()
 const props = defineProps<{ open: boolean }>()
 const emit = defineEmits<{ close: []; pick: [card: TcgCard] }>()
+
+// Lingua immagine derivata dalla locale UI — il template usa
+// `preferredLang` (auto-unwrap del ref) nelle src.
+const preferredLang = usePreferredLang()
 
 const search = ref('')
 const debouncedSearch = ref('')

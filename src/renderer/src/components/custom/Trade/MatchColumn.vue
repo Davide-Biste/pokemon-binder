@@ -51,6 +51,7 @@ import { snapshotToTcgCard } from '@/lib/binder-card'
 
 const { t } = useI18n()
 import { getCardImageUrl } from '@/api/tcg'
+import { usePreferredLang } from '@/i18n'
 import type { BinderCardSnapshot } from '@shared/binders'
 import type { TradeMatchEntry } from '@/lib/trade-match'
 
@@ -68,7 +69,8 @@ const titleClass = computed(() =>
   props.tint === 'violet' ? 'text-violet-300' : 'text-emerald-300'
 )
 
+const preferredLang = usePreferredLang()
 function imageUrl(snap: BinderCardSnapshot): string {
-  return getCardImageUrl(snapshotToTcgCard(snap), { preferredLang: 8 })
+  return getCardImageUrl(snapshotToTcgCard(snap), { preferredLang: preferredLang.value })
 }
 </script>

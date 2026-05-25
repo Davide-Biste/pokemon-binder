@@ -19,6 +19,9 @@ import { useImportFriend } from '@/composables/useFriends'
 import ExportProfileDialog from '@/components/custom/ExportProfileDialog.vue'
 import LanguageSwitcher from '@/components/custom/LanguageSwitcher.vue'
 
+const version = import.meta.env.VITE_APP_VERSION
+console.log({ version: import.meta.env })
+
 const route = useRoute()
 const router = useRouter()
 const { t } = useI18n()
@@ -31,7 +34,12 @@ const navItems = [
   { id: 'pokedex', labelKey: 'sidebar.pokedex', icon: GridViewIcon, path: '/pokedex' },
   { id: 'wishlist', labelKey: 'sidebar.wishlist', icon: FavouriteIcon, path: '/wishlist' },
   { id: 'friends', labelKey: 'sidebar.friends', icon: UserMultiple02Icon, path: '/friends' },
-  { id: 'trades', labelKey: 'sidebar.trades', icon: ArrowDataTransferHorizontalIcon, path: '/trades' }
+  {
+    id: 'trades',
+    labelKey: 'sidebar.trades',
+    icon: ArrowDataTransferHorizontalIcon,
+    path: '/trades'
+  }
 ] as const
 
 const isActive = (path: string): boolean => route.path === path || route.path.startsWith(path + '/')
@@ -55,7 +63,7 @@ async function onImportFriend() {
       <div class="pb-brand-logo"></div>
       <div class="pb-brand-text">
         <b>Po-Po-POKE</b>
-        <small>v2.4 · {{ t('badges.pro') }}</small>
+        <small>{{ version }} · {{ t('badges.pro') }}</small>
       </div>
     </div>
 

@@ -21,29 +21,30 @@
       </svg>
     </button>
 
-    <!-- Filled slot: card image + remove affordance on hover -->
+    <!--
+      Filled slot: card image + remove affordance on hover.
+      Cliccando la carta si apre il TcgCardDialog (stesso effetto del catalogo).
+      Il `cursor-grab` resta come affordance di trascinabilità; click vs drag
+      vengono distinti dal browser (click parte solo se non c'è stato
+      movimento sufficiente da innescare il drag).
+    -->
     <div
       v-else
-      class="relative h-full w-full cursor-grab overflow-hidden rounded-[4%] shadow-lg ring-1 ring-white/5 transition-shadow active:cursor-grabbing"
+      class="relative h-full w-full cursor-grab transition-opacity active:cursor-grabbing"
       :class="[
-        rarity.ring,
-        `group-hover:shadow-2xl ${rarity.glow}`,
-        'group-hover:ring-2',
-        { 'opacity-40': dragging, 'ring-2 ring-red-400/80': dragOver }
+        { 'opacity-40': dragging, 'ring-2 ring-red-400/80 rounded-[4%]': dragOver }
       ]"
+      @click="onCardClick"
     >
-      <img
-        v-if="!broken"
-        :src="imageUrl"
+      <TcgCardThumb
+        :src="broken ? null : imageUrl"
         :alt="slot.card.card_name"
-        class="absolute inset-0 h-full w-full object-cover"
-        loading="lazy"
-        draggable="false"
+        :rarity="slot.card.card_rarity"
+        :supertype="slot.card.card_type"
+        :number="slot.card.card_number"
+        class="absolute inset-0"
         @error="onImageError"
       />
-      <div v-else class="absolute inset-0 flex items-center justify-center bg-zinc-900 text-[10px] text-white/30">
-        No image
-      </div>
 
       <!-- Persistent cover badge -->
       <span
@@ -119,6 +120,14 @@
         </button>
       </div>
     </div>
+
+    <!-- Dialog di zoom della carta — stesso usato dal catalogo / ricerca. -->
+    <TcgCardDialog
+      v-if="dialogCard"
+      :card="dialogCard"
+      :open="dialogOpen"
+      @close="dialogOpen = false"
+    />
   </div>
 </template>
 
@@ -128,7 +137,9 @@ import { useI18n } from 'vue-i18n'
 import type { BinderSlot, TradeStatus } from '@shared/binders'
 import { getCardImageUrls } from '@/api/tcg'
 import { snapshotToTcgCard } from '@/lib/binder-card'
-import { getRarityStyle } from '@/lib/tcg-rarities'
+import { usePreferredLang } from '@/i18n'
+import TcgCardThumb from '@/components/custom/TcgCard/TcgCardThumb.vue'
+import TcgCardDialog from '@/components/custom/TcgCard/TcgCardDialog.vue'
 
 const { t } = useI18n()
 
@@ -167,18 +178,40 @@ const dragging = ref(false)
 const dragOver = ref(false)
 const broken = ref(false)
 const urlIndex = ref(0)
+const dialogOpen = ref(false)
 
+const preferredLang = usePreferredLang()
 const urlCandidates = computed(() =>
   props.slot
-    ? getCardImageUrls(snapshotToTcgCard(props.slot.card), { preferredLang: 8 })
+    ? getCardImageUrls(snapshotToTcgCard(props.slot.card), {
+        preferredLang: preferredLang.value
+      })
     : []
 )
 const imageUrl = computed(() => urlCandidates.value[urlIndex.value])
-const rarity = computed(() => getRarityStyle(props.slot?.card.card_rarity))
+
+/** TcgCard hydrated from the binder snapshot; il dialog si aspetta una
+ * TcgCard piena, non lo `BinderCardSnapshot` slim che abbiamo nei binder. */
+const dialogCard = computed(() =>
+  props.slot ? snapshotToTcgCard(props.slot.card) : null
+)
 
 function onImageError() {
   if (urlIndex.value < urlCandidates.value.length - 1) urlIndex.value++
   else broken.value = true
+}
+
+/**
+ * Click sulla carta → apre il dialog di zoom. I bottoni interni (set-cover,
+ * remove, trade pills) usano `@click.stop` quindi non bubble qui.
+ *
+ * `dragging` distingue il caso click-puro dal drag-then-release: durante un
+ * drag il browser sopprime il click di fine, quindi qui arriviamo solo se
+ * davvero è stato un click "fermo".
+ */
+function onCardClick() {
+  if (dragging.value) return
+  dialogOpen.value = true
 }
 
 const DRAG_MIME = 'application/x-binder-slot'

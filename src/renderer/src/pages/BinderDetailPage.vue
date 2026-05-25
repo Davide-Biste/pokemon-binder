@@ -18,7 +18,7 @@
         <header class="mb-6 flex flex-col gap-5 sm:flex-row sm:items-center">
           <div
             v-if="binder.coverCard"
-            class="aspect-[5/7] w-20 shrink-0 overflow-hidden rounded-xl bg-zinc-950 shadow-lg ring-1 ring-white/10 sm:w-24"
+            class="aspect-5/7 w-20 shrink-0 overflow-hidden rounded-xs bg-transparent shadow-lg ring-1 ring-white/10 sm:w-24"
           >
             <img
               :src="coverUrl(binder.coverCard)"
@@ -95,15 +95,22 @@
             :key="`${currentPage.id}-${slotIndex - 1}`"
             class="aspect-[5/7] w-full"
           >
+            <!--
+              Click sulla carta → apre il dialog di zoom (stesso del catalogo).
+              Holo effect ereditato da TcgCardThumb in base alla rarità.
+            -->
             <div
               v-if="slotMap.get(slotIndex - 1)"
-              class="relative h-full w-full overflow-hidden rounded-[4%] shadow-lg ring-1 ring-white/5 transition hover:-translate-y-0.5 hover:shadow-2xl hover:ring-white/20"
+              class="relative h-full w-full cursor-zoom-in"
+              @click="openDialog(slotMap.get(slotIndex - 1)!.card)"
             >
-              <img
+              <TcgCardThumb
                 :src="cardUrl(slotMap.get(slotIndex - 1)!.card)"
                 :alt="slotMap.get(slotIndex - 1)!.card.card_name"
-                class="absolute inset-0 h-full w-full object-cover"
-                loading="lazy"
+                :rarity="slotMap.get(slotIndex - 1)!.card.card_rarity"
+                :supertype="slotMap.get(slotIndex - 1)!.card.card_type"
+                :number="slotMap.get(slotIndex - 1)!.card.card_number"
+                class="absolute inset-0"
               />
             </div>
             <div
@@ -116,6 +123,14 @@
 
       <div v-else class="py-20 text-center text-white/40">{{ t('binderDetail.notFound') }}</div>
     </div>
+
+    <!-- Card zoom dialog (stesso del catalogo). -->
+    <TcgCardDialog
+      v-if="dialogCard"
+      :card="dialogCard"
+      :open="dialogOpen"
+      @close="dialogOpen = false"
+    />
   </PkmContainer>
 </template>
 
@@ -126,8 +141,11 @@ import { useI18n } from 'vue-i18n'
 import PkmContainer from '@/components/custom/PkmContainer.vue'
 import { Button } from '@/components/ui/button'
 import { useBinder } from '@/composables/useBinders'
-import { getCardImageUrl } from '@/api/tcg'
+import { getCardImageUrl, type TcgCard } from '@/api/tcg'
 import { snapshotToTcgCard } from '@/lib/binder-card'
+import { usePreferredLang } from '@/i18n'
+import TcgCardThumb from '@/components/custom/TcgCard/TcgCardThumb.vue'
+import TcgCardDialog from '@/components/custom/TcgCard/TcgCardDialog.vue'
 import type { BinderCardSnapshot } from '@shared/binders'
 
 const { t } = useI18n()
@@ -163,8 +181,18 @@ const slotMap = computed(() => {
   return m
 })
 
+// Reactive: cambia automaticamente quando l'utente cambia lingua app.
+const preferredLang = usePreferredLang()
 function coverUrl(snap: BinderCardSnapshot): string {
-  return getCardImageUrl(snapshotToTcgCard(snap), { preferredLang: 8 })
+  return getCardImageUrl(snapshotToTcgCard(snap), { preferredLang: preferredLang.value })
 }
 const cardUrl = coverUrl
+
+/** Card zoom dialog state — idratiamo lo snapshot a TcgCard on click. */
+const dialogOpen = ref(false)
+const dialogCard = ref<TcgCard | null>(null)
+function openDialog(snap: BinderCardSnapshot) {
+  dialogCard.value = snapshotToTcgCard(snap)
+  dialogOpen.value = true
+}
 </script>

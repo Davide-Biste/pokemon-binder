@@ -108,6 +108,7 @@ import type { Binder, BinderCardSnapshot } from '@shared/binders'
 import { Button } from '@/components/ui/button'
 import { getCardImageUrl } from '@/api/tcg'
 import { snapshotToTcgCard } from '@/lib/binder-card'
+import { usePreferredLang } from '@/i18n'
 
 const { t } = useI18n()
 const props = defineProps<{ open: boolean; binder: Binder | null | undefined }>()
@@ -129,8 +130,9 @@ const cards = computed<BinderCardSnapshot[]>(() => {
 
 const currentCoverId = computed(() => props.binder?.coverCard?.id ?? null)
 
+const preferredLang = usePreferredLang()
 function coverUrl(card: BinderCardSnapshot): string {
-  return getCardImageUrl(snapshotToTcgCard(card), { preferredLang: 8 })
+  return getCardImageUrl(snapshotToTcgCard(card), { preferredLang: preferredLang.value })
 }
 
 // ESC + body scroll lock while open.

@@ -16,7 +16,7 @@
         <!-- Close button -->
         <button
           type="button"
-          class="absolute right-6 top-6 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white/80 ring-1 ring-white/15 backdrop-blur transition hover:bg-white/20 hover:text-white"
+          class="absolute cursor-pointer right-6 top-6 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white/80 ring-1 ring-white/15 backdrop-blur transition hover:bg-white/20 hover:text-white"
           aria-label="Close"
           @click="$emit('close')"
         >
@@ -38,26 +38,19 @@
             v-if="open"
             class="relative flex max-h-full w-full max-w-5xl flex-col items-center gap-6 lg:flex-row lg:items-stretch"
           >
-            <!-- Card image -->
+            <!-- Card image — versione "zoom" della thumb, con effetto holo
+                 attivo. Stessa logica DOM/event di TcgCardThumb così la
+                 carta sente il pointermove anche qui dentro. -->
             <div class="relative shrink-0">
-              <div
-                class="relative aspect-[5/7] h-[min(80vh,640px)] overflow-hidden rounded-3xl shadow-[0_25px_80px_rgba(0,0,0,0.7)] ring-1 ring-white/10"
-                :class="[rarity.ring, rarity.glow.replace('group-hover:', '')]"
-              >
-                <img
-                  v-if="!broken"
-                  :src="currentUrl"
-                  :alt="card.card_name"
-                  class="absolute inset-0 h-full w-full object-cover"
-                  @error="onImageError"
-                />
-                <div
-                  v-else
-                  class="absolute inset-0 flex items-center justify-center bg-zinc-900 text-white/40"
-                >
-                  No image available
-                </div>
-              </div>
+              <TcgCardThumb
+                :src="broken ? null : currentUrl"
+                :alt="card.card_name"
+                :rarity="card.card_rarity"
+                :supertype="card.card_type"
+                :number="card.card_number"
+                class="h-[min(80vh,640px)]"
+                @error="onImageError"
+              />
             </div>
 
             <!-- Info panel -->
@@ -100,11 +93,32 @@
                     <dt class="text-[10px] uppercase tracking-wider text-white/40">Artist</dt>
                     <dd class="font-medium italic text-white">{{ card.artist }}</dd>
                   </div>
-                  <div>
-                    <dt class="text-[10px] uppercase tracking-wider text-white/40">Language</dt>
-                    <dd class="font-medium uppercase text-white">{{ card.lang }}</dd>
-                  </div>
                 </dl>
+
+                <!--
+                  Lingue disponibili — `card.lang` da solo era fuorviante:
+                  rappresenta il record sorgente nel DB (spesso "eng") anche
+                  quando l'immagine viene caricata in IT via `preferredLang`.
+                  Mostriamo quindi tutte le lingue in cui il set è stato
+                  pubblicato, calcolate dai campi `set_name_lang_N`.
+                -->
+                <div v-if="availableLanguages.length > 0" class="space-y-1.5">
+                  <p class="text-[10px] uppercase tracking-wider text-white/40">
+                    Languages
+                  </p>
+                  <div class="flex flex-wrap gap-1.5">
+                    <span
+                      v-for="lang in availableLanguages"
+                      :key="lang.code"
+                      class="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-2 py-0.5 text-[11px] font-medium uppercase tracking-wider text-white/80"
+                    >
+                      <!-- `text-base` sulla bandiera la rende leggibile
+                           accanto al testo small/uppercase. -->
+                      <span class="text-base leading-none" aria-hidden="true">{{ lang.flag }}</span>
+                      <span>{{ lang.code }}</span>
+                    </span>
+                  </div>
+                </div>
 
                 <!-- Variants -->
                 <div v-if="variants.length > 0" class="space-y-1.5">
@@ -136,15 +150,23 @@
 
 <script setup lang="ts">
 import { computed, ref, watch, onUnmounted } from 'vue'
-import { getCardImageUrls, getSetName, type TcgCard } from '@/api/tcg'
+import {
+  getAvailableLanguages,
+  getCardImageUrls,
+  getSetName,
+  type TcgCard
+} from '@/api/tcg'
 import { getRarityStyle } from '@/lib/tcg-rarities'
+import { usePreferredLang } from '@/i18n'
+import TcgCardThumb from '@/components/custom/TcgCard/TcgCardThumb.vue'
 
 const props = defineProps<{ card: TcgCard; open: boolean }>()
 const emit = defineEmits<{ close: [] }>()
 
 // Dialog zoom: always serves the full-res asset (thumbnails are never used).
+const preferredLang = usePreferredLang()
 const urlCandidates = computed(() =>
-  getCardImageUrls(props.card, { preferredLang: 8 })
+  getCardImageUrls(props.card, { preferredLang: preferredLang.value })
 )
 const urlIndex = ref(0)
 const broken = ref(false)
@@ -167,7 +189,7 @@ watch(
   }
 )
 
-const setName = computed(() => getSetName(props.card))
+const setName = computed(() => getSetName(props.card, preferredLang.value))
 const rarity = computed(() => getRarityStyle(props.card.card_rarity))
 
 const variants = computed(() => {
@@ -177,6 +199,8 @@ const variants = computed(() => {
   if (props.card.no_holo === '1') out.push('Non-Holo')
   return out
 })
+
+const availableLanguages = computed(() => getAvailableLanguages(props.card))
 
 // ESC to close + lock body scroll while open.
 function onKey(e: KeyboardEvent) {

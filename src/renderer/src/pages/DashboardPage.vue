@@ -217,14 +217,12 @@
               :key="item.id"
               class="flex items-center gap-3 rounded-lg bg-white/[0.02] p-2 ring-1 ring-white/5"
             >
-              <div class="aspect-[5/7] h-12 shrink-0 overflow-hidden rounded-md bg-zinc-950 ring-1 ring-white/5">
-                <img
-                  :src="coverUrl(item.card)"
-                  :alt="item.card.card_name"
-                  loading="lazy"
-                  class="h-full w-full object-cover"
-                />
-              </div>
+              <TcgCardThumb
+                :src="coverUrl(item.card)"
+                :alt="item.card.card_name"
+                :rarity="item.card.card_rarity"
+                class="h-12 shrink-0"
+              />
               <div class="min-w-0 flex-1">
                 <p class="truncate text-xs font-medium text-white">{{ item.card.card_name }}</p>
                 <p class="truncate text-[10px] text-white/40">#{{ item.card.card_number }}</p>
@@ -254,12 +252,14 @@ import CreateBinderDialog from '@/components/custom/Binder/CreateBinderDialog.vu
 import ExportProfileDialog from '@/components/custom/ExportProfileDialog.vue'
 import DashStat from '@/components/custom/Dashboard/DashStat.vue'
 import FairnessBadge from '@/components/custom/Dashboard/FairnessBadge.vue'
+import TcgCardThumb from '@/components/custom/TcgCard/TcgCardThumb.vue'
 import { useBinders } from '@/composables/useBinders'
 import { useWishlist } from '@/composables/useWishlist'
 import { useFriendsFull } from '@/composables/useFriends'
 import { useOwnerName, useOwnerProfile, useSetOwnerName } from '@/composables/useProfile'
 import { snapshotToTcgCard } from '@/lib/binder-card'
 import { getCardImageUrl } from '@/api/tcg'
+import { usePreferredLang } from '@/i18n'
 import { computeTradeRadar } from '@/lib/trade-match'
 import type { Binder, BinderCardSnapshot } from '@shared/binders'
 
@@ -337,8 +337,9 @@ const radar = computed(() => {
 const recentBinders = computed(() => (binders.value ?? []).slice(0, 4))
 const recentWishlist = computed(() => (wishlist.value ?? []).slice(0, 5))
 
+const preferredLang = usePreferredLang()
 function coverUrl(snap: BinderCardSnapshot): string {
-  return getCardImageUrl(snapshotToTcgCard(snap), { preferredLang: 8 })
+  return getCardImageUrl(snapshotToTcgCard(snap), { preferredLang: preferredLang.value })
 }
 
 function initials(name: string): string {

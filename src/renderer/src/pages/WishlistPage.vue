@@ -18,14 +18,24 @@
         <div
           v-for="item in data"
           :key="item.id"
-          class="group relative overflow-hidden rounded-2xl border border-white/10 bg-zinc-900/60 p-3 transition hover:border-yellow-400/50 hover:shadow-xl hover:shadow-yellow-400/10"
+          class="group relative rounded-2xl border border-white/10 bg-zinc-900/60 p-3 transition hover:border-yellow-400/50 hover:shadow-xl hover:shadow-yellow-400/10"
         >
-          <div class="aspect-[5/7] w-full overflow-hidden rounded-lg bg-zinc-950 ring-1 ring-white/5">
-            <img
+          <!--
+            Click sulla thumb apre il dialog di zoom (stesso del catalogo).
+            La nota e il pulsante "rimuovi" restano interattivi a parte
+            (sono fuori dalla zona cliccabile della carta).
+
+            Niente `overflow-hidden` sul wrapper esterno: il pop / glow holo
+            ha bisogno di spazio per uscire dai bordi della cella.
+          -->
+          <div class="cursor-zoom-in" @click="openDialog(item.card)">
+            <TcgCardThumb
               :src="imageUrl(item.card)"
               :alt="item.card.card_name"
-              loading="lazy"
-              class="h-full w-full object-cover"
+              :rarity="item.card.card_rarity"
+              :supertype="item.card.card_type"
+              :number="item.card.card_number"
+              class="w-full"
             />
           </div>
           <p class="mt-2 truncate text-sm font-medium text-white">{{ item.card.card_name }}</p>
@@ -62,6 +72,14 @@
     </div>
 
     <CardPickerDialog :open="pickerOpen" @close="pickerOpen = false" @pick="onPick" />
+
+    <!-- Card zoom dialog (stesso del catalogo). -->
+    <TcgCardDialog
+      v-if="dialogCard"
+      :card="dialogCard"
+      :open="dialogOpen"
+      @close="dialogOpen = false"
+    />
   </PkmContainer>
 </template>
 
@@ -70,6 +88,8 @@ import { reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import PkmContainer from '@/components/custom/PkmContainer.vue'
 import CardPickerDialog from '@/components/custom/Binder/CardPickerDialog.vue'
+import TcgCardThumb from '@/components/custom/TcgCard/TcgCardThumb.vue'
+import TcgCardDialog from '@/components/custom/TcgCard/TcgCardDialog.vue'
 import { Button } from '@/components/ui/button'
 import {
   useAddWishlist,
@@ -79,6 +99,7 @@ import {
 } from '@/composables/useWishlist'
 import { snapshotToTcgCard, toBinderSnapshot } from '@/lib/binder-card'
 import { getCardImageUrl, type TcgCard } from '@/api/tcg'
+import { usePreferredLang } from '@/i18n'
 import type { BinderCardSnapshot } from '@shared/binders'
 
 const { t } = useI18n()
@@ -104,8 +125,9 @@ watch(
   { immediate: true }
 )
 
+const preferredLang = usePreferredLang()
 function imageUrl(snap: BinderCardSnapshot): string {
-  return getCardImageUrl(snapshotToTcgCard(snap), { preferredLang: 8 })
+  return getCardImageUrl(snapshotToTcgCard(snap), { preferredLang: preferredLang.value })
 }
 
 function onPick(card: TcgCard) {
@@ -118,5 +140,13 @@ function persistNote(id: number, currentSaved: string | null) {
   if (next !== (currentSaved ?? null)) {
     updateNote.mutate({ id, note: next })
   }
+}
+
+/** Card zoom dialog state — idratiamo lo snapshot a TcgCard on click. */
+const dialogOpen = ref(false)
+const dialogCard = ref<TcgCard | null>(null)
+function openDialog(snap: BinderCardSnapshot) {
+  dialogCard.value = snapshotToTcgCard(snap)
+  dialogOpen.value = true
 }
 </script>

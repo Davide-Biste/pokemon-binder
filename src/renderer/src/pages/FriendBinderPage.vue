@@ -99,21 +99,29 @@
               :key="`${currentPage.id}-${slotIndex - 1}`"
               class="relative aspect-[5/7] w-full"
             >
+              <!--
+                Stesso pattern di BinderSlot ma read-only: holo thumb + click
+                apre il dialog di zoom. Niente drag, niente bottoni hover
+                (è il binder di un amico, non si modifica).
+              -->
               <div
                 v-if="slotMap.get(slotIndex - 1)"
-                class="relative h-full w-full overflow-hidden rounded-[4%] shadow-lg ring-1 ring-white/5"
+                class="relative h-full w-full cursor-zoom-in"
+                @click="openDialog(slotMap.get(slotIndex - 1)!.card)"
               >
-                <img
+                <TcgCardThumb
                   :src="imageUrl(slotMap.get(slotIndex - 1)!.card)"
                   :alt="slotMap.get(slotIndex - 1)!.card.card_name"
-                  loading="lazy"
-                  class="absolute inset-0 h-full w-full object-cover"
+                  :rarity="slotMap.get(slotIndex - 1)!.card.card_rarity"
+                  :supertype="slotMap.get(slotIndex - 1)!.card.card_type"
+                  :number="slotMap.get(slotIndex - 1)!.card.card_number"
+                  class="absolute inset-0"
                 />
                 <!-- Trade-status badge -->
                 <span
                   v-if="slotMap.get(slotIndex - 1)!.tradeStatus !== 'keep'"
                   :class="[
-                    'absolute bottom-1.5 left-1.5 rounded-full px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-white shadow',
+                    'pointer-events-none absolute bottom-1.5 left-1.5 z-10 rounded-full px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-white shadow',
                     slotMap.get(slotIndex - 1)!.tradeStatus === 'for_trade'
                       ? 'bg-emerald-500/90'
                       : 'bg-sky-500/90'
@@ -137,6 +145,14 @@
 
       <div v-else class="py-20 text-center text-white/40">{{ t('friendBinder.notFound') }}</div>
     </div>
+
+    <!-- Card zoom dialog (stesso usato nel catalogo). -->
+    <TcgCardDialog
+      v-if="dialogCard"
+      :card="dialogCard"
+      :open="dialogOpen"
+      @close="dialogOpen = false"
+    />
   </PkmContainer>
 </template>
 
@@ -148,7 +164,10 @@ import PkmContainer from '@/components/custom/PkmContainer.vue'
 import { Button } from '@/components/ui/button'
 import { useFriend } from '@/composables/useFriends'
 import { snapshotToTcgCard } from '@/lib/binder-card'
-import { getCardImageUrl } from '@/api/tcg'
+import { getCardImageUrl, type TcgCard } from '@/api/tcg'
+import { usePreferredLang } from '@/i18n'
+import TcgCardThumb from '@/components/custom/TcgCard/TcgCardThumb.vue'
+import TcgCardDialog from '@/components/custom/TcgCard/TcgCardDialog.vue'
 import type { Binder, BinderCardSnapshot } from '@shared/binders'
 
 const { t } = useI18n()
@@ -191,8 +210,21 @@ function totalCards(b: Binder): number {
   return b.pages.reduce((acc, p) => acc + p.slots.length, 0)
 }
 
+const preferredLang = usePreferredLang()
 function imageUrl(snap: BinderCardSnapshot): string {
-  return getCardImageUrl(snapshotToTcgCard(snap), { preferredLang: 8 })
+  return getCardImageUrl(snapshotToTcgCard(snap), { preferredLang: preferredLang.value })
+}
+
+/**
+ * Click su una carta del binder dell'amico → apre il dialog di zoom.
+ * Il dialog accetta una `TcgCard` completa, quindi idratiamo dallo snapshot
+ * leggero salvato nel binder.
+ */
+const dialogOpen = ref(false)
+const dialogCard = ref<TcgCard | null>(null)
+function openDialog(snap: BinderCardSnapshot) {
+  dialogCard.value = snapshotToTcgCard(snap)
+  dialogOpen.value = true
 }
 
 function formatDate(ts: number): string {

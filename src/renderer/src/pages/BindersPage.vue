@@ -96,6 +96,7 @@ import { Button } from '@/components/ui/button'
 import { useBinders, useRemoveBinder } from '@/composables/useBinders'
 import { getCardImageUrl } from '@/api/tcg'
 import { snapshotToTcgCard } from '@/lib/binder-card'
+import { usePreferredLang } from '@/i18n'
 import type { BinderCardSnapshot, Binder } from '@shared/binders'
 import CreateBinderDialog from '@/components/custom/Binder/CreateBinderDialog.vue'
 
@@ -106,8 +107,9 @@ const remove = useRemoveBinder()
 
 const showCreate = ref(false)
 
+const preferredLang = usePreferredLang()
 function coverUrl(snap: BinderCardSnapshot): string {
-  return getCardImageUrl(snapshotToTcgCard(snap), { preferredLang: 8 })
+  return getCardImageUrl(snapshotToTcgCard(snap), { preferredLang: preferredLang.value })
 }
 
 function confirmDelete(id: number, name: string) {

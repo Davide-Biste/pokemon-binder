@@ -11,6 +11,7 @@
  * asynchronously after main.ts has installed it — we don't want the whole
  * app boot to wait on an IPC call.
  */
+import { computed, type ComputedRef } from 'vue'
 import { createI18n } from 'vue-i18n'
 import en from './locales/en'
 import it from './locales/it'
@@ -72,4 +73,35 @@ export async function setLocale(locale: SupportedLocale): Promise<void> {
   } catch {
     // Persistence is best-effort; in-memory switch still happened.
   }
+}
+
+/**
+ * Mapping locale UI → ID lingua pokeos (vedi `LANG_CODES` in `api/tcg.ts`).
+ * Esteso facilmente quando aggiungeremo altre lingue (es. 'fr' → 5).
+ */
+const LOCALE_TO_POKEOS_LANG: Record<SupportedLocale, number> = {
+  en: 9,
+  it: 8
+}
+
+/** Default usato quando la locale corrente non ha un mapping diretto. */
+const DEFAULT_POKEOS_LANG = 9 // EN — lingua più diffusa del TCG
+
+/**
+ * Reactive `preferredLang` derivata dalla locale UI corrente.
+ *
+ * Usata da `getCardImageUrl{,s}()` e `getSetName()` per scegliere quale
+ * versione localizzata della carta/set mostrare. Quando l'utente cambia
+ * lingua dell'app via `setLocale()`, tutti i computed che dipendono da
+ * questa ref re-renderizzano automaticamente con le nuove URL/nomi.
+ *
+ * Es. uso:
+ *   const preferredLang = usePreferredLang()
+ *   const url = computed(() => getCardImageUrl(card, { preferredLang: preferredLang.value }))
+ */
+export function usePreferredLang(): ComputedRef<number> {
+  return computed(() => {
+    const code = i18n.global.locale.value as string
+    return LOCALE_TO_POKEOS_LANG[code as SupportedLocale] ?? DEFAULT_POKEOS_LANG
+  })
 }
